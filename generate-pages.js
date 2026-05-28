@@ -20,9 +20,8 @@ pages.forEach(p => {
   fs.mkdirSync(dir, { recursive: true });
   
   const depth = p.path.split('/').length;
-  // if depth = 1 (e.g. travel-tourism), relative to components is ../../components
-  // if depth = 2 (e.g. programs/hajj-umrah), relative is ../../../components
-  const relativePrefix = '../'.repeat(depth + 1);
+  // If depth=1 (e.g. travel-tourism), we need to go up 3 times: travel-tourism -> dashboard -> app -> src
+  const relativePrefix = '../'.repeat(depth + 2);
   
   const content = `import CrudPage from "${relativePrefix}components/CrudPage/CrudPage";
 
