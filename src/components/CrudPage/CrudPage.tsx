@@ -13,6 +13,7 @@ interface CrudPageProps {
   columns?: Column[];
   fields?: FormField[];
   fetchDetailOnEdit?: boolean;
+  allowCreate?: boolean;
 }
 
 type FieldType = "text" | "number" | "date" | "select" | "textarea" | "checkbox-group";
@@ -36,16 +37,36 @@ function normalizeApiItem(payload: any) {
     return payload;
   }
 
+  const nestedSources = [payload.data, payload];
+
+  for (const source of nestedSources) {
+    if (!source || Array.isArray(source)) {
+      continue;
+    }
+
+    if (source.business) {
+      return source.business;
+    }
+
+    if (source.travelTourism) {
+      return source.travelTourism;
+    }
+
+    if (source.event) {
+      return source.event;
+    }
+
+    if (source.program) {
+      return source.program;
+    }
+
+    if (source.item) {
+      return source.item;
+    }
+  }
+
   if (payload.data && !Array.isArray(payload.data)) {
     return payload.data;
-  }
-
-  if (payload.travelTourism) {
-    return payload.travelTourism;
-  }
-
-  if (payload.item) {
-    return payload.item;
   }
 
   return payload;
@@ -69,8 +90,23 @@ function toFormValues(item: Record<string, any>, fields: FormField[]) {
       return;
     }
 
+    if (field.type === "select" && typeof value === "boolean") {
+      nextFormData[field.key] = value ? "Yes" : "No";
+      return;
+    }
+
+    if (field.type === "checkbox-group") {
+      nextFormData[field.key] = Array.isArray(value) ? value : [];
+      return;
+    }
+
     if (Array.isArray(value)) {
       nextFormData[field.key] = value.join(", ");
+      return;
+    }
+
+    if (value && typeof value === "object" && "_id" in value) {
+      nextFormData[field.key] = value._id;
       return;
     }
 
@@ -101,6 +137,21 @@ function toSubmitPayload(formData: Record<string, any>, fields: FormField[]) {
       return;
     }
 
+    if (
+      field.type === "select" &&
+      field.options?.some((option) => option.value === "Yes" || option.value === "No")
+    ) {
+      if (value === "Yes") {
+        payload[field.key] = true;
+        return;
+      }
+
+      if (value === "No") {
+        payload[field.key] = false;
+        return;
+      }
+    }
+
     if (field.type === "number") {
       payload[field.key] = value === "" ? undefined : Number(value);
       return;
@@ -123,6 +174,7 @@ export default function CrudPage({
   columns: customColumns,
   fields = [],
   fetchDetailOnEdit = false,
+  allowCreate = true,
 }: CrudPageProps) {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -291,7 +343,7 @@ export default function CrudPage({
         data={data}
         columns={columns}
         loading={loading}
-        onAdd={handleAdd}
+        onAdd={allowCreate ? handleAdd : undefined}
         onEdit={handleEdit}
         onDelete={handleDelete}
       />

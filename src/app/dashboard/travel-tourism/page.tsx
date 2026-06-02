@@ -8,9 +8,14 @@ export default function Page() {
       title="Travel Tourism"
       endpoint="/api/travel-tourism"
       fetchDetailOnEdit
+      allowCreate={false}
       columns={[
         { key: "_id", label: "ID" },
-        { key: "clientId", label: "Client ID" },
+        {
+          key: "clientId",
+          label: "Client",
+          render: (value) => value?.fullName || value?._id || value || "-",
+        },
         { key: "tripType", label: "Trip Type" },
         { key: "leavingFrom", label: "Leaving From" },
         { key: "goingTo", label: "Going To" },

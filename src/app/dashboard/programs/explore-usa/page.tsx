@@ -8,6 +8,7 @@ export default function Page() {
       title="Explore USA"
       endpoint="/api/programs/explore-usa"
       fetchDetailOnEdit
+      allowCreate={false}
       columns={[
         { key: "_id", label: "ID" },
         { key: "fullName", label: "Full Name" },
@@ -34,10 +35,9 @@ export default function Page() {
             { label: "Whatsapp", value: "Whatsapp" },
           ],
         },
-        { key: "contactInfo", label: "Contact Info", type: "textarea" },
         { key: "tripStartDate", label: "Trip Start Date", type: "date", placeholder: "mm/dd/yyyy" },
         { key: "tripEndDate", label: "Trip End Date", type: "date", placeholder: "mm/dd/yyyy" },
-        { key: "numberOfTravelers", label: "Number of Travelers", placeholder: "Type here" },
+        { key: "numberOfTravelers", label: "Number of Travelers", type: "number", placeholder: "Type here" },
         {
           key: "tripType",
           label: "Trip Type",
@@ -67,7 +67,7 @@ export default function Page() {
             { label: "Other (Please specify)", value: "Other (Please specify)" },
           ],
         },
-        { key: "programPreferences", label: "Program Preferences" },
+        { key: "otherDestination", label: "Other Destination", placeholder: "Please specify other destination" },
         {
           key: "preferredGuidingLanguage",
           label: "Preferred Guiding Language",
@@ -82,7 +82,7 @@ export default function Page() {
         },
         { key: "budgetRange", label: "Budget Range", placeholder: "Type here" },
         {
-          key: "helpWithDomesticFlights",
+          key: "domesticFlightsNeeded",
           label: "Do You Need Help With Domestic Flights?",
           type: "select",
           options: [
@@ -91,7 +91,7 @@ export default function Page() {
           ],
         },
         {
-          key: "helpWithHotelAccommodation",
+          key: "hotelAccommodationNeeded",
           label: "Do You Need Help With Hotel/Accommodation?",
           type: "select",
           options: [
@@ -100,7 +100,7 @@ export default function Page() {
           ],
         },
         {
-          key: "notesSpecialRequests",
+          key: "notesAndSpecialRequests",
           label: "Notes & Special Requests",
           type: "textarea",
           placeholder: "Please mention any special requirements or notes",

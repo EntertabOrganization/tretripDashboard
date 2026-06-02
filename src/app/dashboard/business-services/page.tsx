@@ -10,6 +10,11 @@ export default function Page() {
       fetchDetailOnEdit
       columns={[
         { key: "_id", label: "ID" },
+        {
+          key: "clientId",
+          label: "Client",
+          render: (value) => value?.fullName || value?._id || value || "-",
+        },
         { key: "passportNumber", label: "Passport Number" },
         { key: "gender", label: "Gender" },
         { key: "countryOfDeparture", label: "Country of Departure" },

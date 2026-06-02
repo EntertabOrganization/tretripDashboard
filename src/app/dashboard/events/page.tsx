@@ -8,19 +8,26 @@ export default function Page() {
       title="Events"
       endpoint="/api/events"
       fetchDetailOnEdit
+      allowCreate={false}
       columns={[
         { key: "_id", label: "ID" },
+        {
+          key: "clientId",
+          label: "Client",
+          render: (value) => value?.fullName || value?._id || value || "-",
+        },
         { key: "organization", label: "Organization" },
         { key: "eventName", label: "Event Name" },
         { key: "eventType", label: "Event Type" },
         { key: "city", label: "City" },
         {
-          key: "preferredDates",
-          label: "Preferred Dates",
+          key: "preferredDate",
+          label: "Preferred Date",
           render: (value) => value ? new Date(value).toLocaleDateString() : "-",
         },
       ]}
       fields={[
+        { key: "clientId", label: "Client ID" },
         { key: "organization", label: "Organization", placeholder: "Enter organization name" },
         { key: "position", label: "Position", placeholder: "Enter your position" },
         { key: "eventName", label: "Event Name", placeholder: "Enter event name" },
@@ -42,7 +49,7 @@ export default function Page() {
           ],
         },
         { key: "theme", label: "Theme (Optional)", placeholder: "Enter event theme" },
-        { key: "preferredDates", label: "Preferred Dates", type: "date", placeholder: "mm/dd/yyyy" },
+        { key: "preferredDate", label: "Preferred Date", type: "date", placeholder: "mm/dd/yyyy" },
         { key: "duration", label: "Duration", placeholder: "e.g., 4 hours" },
         {
           key: "expectedAttendees",
@@ -62,7 +69,7 @@ export default function Page() {
         { key: "city", label: "City", placeholder: "Enter city" },
         { key: "country", label: "Country", placeholder: "Select Country" },
         {
-          key: "indoorOutdoorEvent",
+          key: "indoorOutdoor",
           label: "Indoor/Outdoor Event",
           type: "select",
           options: [
@@ -112,11 +119,11 @@ export default function Page() {
             { label: "Transportation", value: "Transportation" },
             { label: "Security", value: "Security" },
             { label: "Photography/Videography", value: "Photography/Videography" },
-            { label: "Other (Please Specify)", value: "Other (Please Specify)" },
+            { label: "Other (Please Specify)", value: "Other" },
           ],
         },
-        { key: "otherAdditionalService", label: "Other Additional Service", placeholder: "Please specify other service" },
-        { key: "estimatedBudget", label: "Estimated Budget", placeholder: "Enter estimated budget ($)" },
+        { key: "additionalServicesOther", label: "Other Additional Service", placeholder: "Please specify other service" },
+        { key: "estimatedBudget", label: "Estimated Budget", type: "number", placeholder: "Enter estimated budget ($)" },
         { key: "additionalNotes", label: "Additional Notes", type: "textarea" },
       ]}
     />

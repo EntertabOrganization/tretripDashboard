@@ -8,8 +8,11 @@ export default function Page() {
       title="Explore Kingdom"
       endpoint="/api/programs/explore-kingdom"
       fetchDetailOnEdit
+      allowCreate={false}
       columns={[
         { key: "_id", label: "ID" },
+        { key: "fullName", label: "Full Name" },
+        { key: "emailAddress", label: "Email Address" },
         {
           key: "tripStartDate",
           label: "Trip Start Date",
@@ -25,10 +28,22 @@ export default function Page() {
         { key: "preferredGuidingLanguage", label: "Guiding Language" },
       ]}
       fields={[
-        { key: "contactInfo", label: "Contact Info", type: "textarea" },
+        { key: "fullName", label: "Full Name", placeholder: "Enter your full name" },
+        { key: "emailAddress", label: "Email Address", placeholder: "Enter your email" },
+        { key: "phoneNumber", label: "Phone Number", placeholder: "Enter your phone number" },
+        {
+          key: "preferredContactMethod",
+          label: "Preferred Contact Method",
+          type: "select",
+          options: [
+            { label: "Email", value: "Email" },
+            { label: "Phone Number", value: "Phone Number" },
+            { label: "Whatsapp", value: "Whatsapp" },
+          ],
+        },
         { key: "tripStartDate", label: "Trip Start Date", type: "date", placeholder: "mm/dd/yyyy" },
         { key: "tripEndDate", label: "Trip End Date", type: "date", placeholder: "mm/dd/yyyy" },
-        { key: "numberOfTravelers", label: "Number of Travelers", placeholder: "Type here" },
+        { key: "numberOfTravelers", label: "Number of Travelers", type: "number", placeholder: "Type here" },
         {
           key: "tripType",
           label: "Trip Type",
@@ -39,7 +54,6 @@ export default function Page() {
             { label: "Hourly", value: "Hourly" },
           ],
         },
-        { key: "destinationPreferences", label: "Destination Preferences" },
         {
           key: "preferredDestinations",
           label: "Preferred Destinations",
@@ -54,7 +68,7 @@ export default function Page() {
             { label: "Other (Please specify)", value: "Other (Please specify)" },
           ],
         },
-        { key: "programPreferences", label: "Program Preferences" },
+        { key: "otherDestination", label: "Other Destination", placeholder: "Please specify other destination" },
         {
           key: "preferredGuidingLanguage",
           label: "Preferred Guiding Language",
@@ -70,7 +84,7 @@ export default function Page() {
         },
         { key: "budgetRange", label: "Budget Range", placeholder: "Type here" },
         {
-          key: "helpWithDomesticFlights",
+          key: "domesticFlightsNeeded",
           label: "Do You Need Help With Domestic Flights?",
           type: "select",
           options: [
@@ -79,7 +93,7 @@ export default function Page() {
           ],
         },
         {
-          key: "helpWithHotelAccommodation",
+          key: "hotelAccommodationNeeded",
           label: "Do You Need Help With Hotel/Accommodation?",
           type: "select",
           options: [
@@ -87,7 +101,7 @@ export default function Page() {
             { label: "No", value: "No" },
           ],
         },
-        { key: "notesSpecialRequests", label: "Notes & Special Requests", type: "textarea" },
+        { key: "notesAndSpecialRequests", label: "Notes & Special Requests", type: "textarea" },
       ]}
     />
   );
