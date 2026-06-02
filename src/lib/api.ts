@@ -1,12 +1,19 @@
-const API_URL = process.env.NEXT_PUBLIC_API_URL || "https://tretrip-backend.vercel.app";
+function trimTrailingSlash(url: string) {
+  return url.replace(/\/+$/, "");
+}
+
+const API_URL = trimTrailingSlash(
+  process.env.NEXT_PUBLIC_API_URL?.trim() || "https://tretrip-backend.vercel.app"
+);
 
 export async function fetcher(endpoint: string, options: RequestInit = {}) {
+  const headers = {
+    "Content-Type": "application/json",
+    ...options.headers,
+  };
   const res = await fetch(`${API_URL}${endpoint}`, {
     ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...options.headers,
-    },
+    headers,
   });
 
   if (!res.ok) {
@@ -14,7 +21,6 @@ export async function fetcher(endpoint: string, options: RequestInit = {}) {
     throw new Error(errorBody || `API Error: ${res.status}`);
   }
 
-  // Handle empty responses (like 204 No Content for DELETE)
   if (res.status === 204) {
     return null;
   }

@@ -224,12 +224,7 @@ export default function CrudPage({
     } catch (error) {
       console.error(`Failed to fetch ${title}:`, error);
       toast.error(`Failed to load data. The backend might be unreachable.`);
-      // Mock data for demo purposes since backend might not be ready or have data
-      const mockData = [
-        { id: "1", name: "Mock Entry 1", status: "Active", createdAt: new Date().toISOString() },
-        { id: "2", name: "Mock Entry 2", status: "Pending", createdAt: new Date().toISOString() },
-      ];
-      setData(mockData);
+      setData([]);
       if (!customColumns) {
         setColumns([
           { key: "id", label: "ID" },
