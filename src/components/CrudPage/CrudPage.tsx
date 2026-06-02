@@ -10,9 +10,115 @@ import styles from "./CrudPage.module.css";
 interface CrudPageProps {
   title: string;
   endpoint: string;
+  columns?: Column[];
+  fields?: FormField[];
+  fetchDetailOnEdit?: boolean;
 }
 
-export default function CrudPage({ title, endpoint }: CrudPageProps) {
+type FieldType = "text" | "number" | "date" | "select" | "textarea";
+
+interface FieldOption {
+  label: string;
+  value: string;
+}
+
+interface FormField {
+  key: string;
+  label: string;
+  type?: FieldType;
+  required?: boolean | ((formData: Record<string, any>) => boolean);
+  options?: FieldOption[];
+  placeholder?: string;
+}
+
+function normalizeApiItem(payload: any) {
+  if (!payload || Array.isArray(payload)) {
+    return payload;
+  }
+
+  if (payload.data && !Array.isArray(payload.data)) {
+    return payload.data;
+  }
+
+  if (payload.travelTourism) {
+    return payload.travelTourism;
+  }
+
+  if (payload.item) {
+    return payload.item;
+  }
+
+  return payload;
+}
+
+function formatDateForInput(value: any) {
+  if (!value) return "";
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return date.toISOString().split("T")[0];
+}
+
+function toFormValues(item: Record<string, any>, fields: FormField[]) {
+  const nextFormData: Record<string, any> = {};
+
+  fields.forEach((field) => {
+    const value = item?.[field.key];
+
+    if (field.type === "date") {
+      nextFormData[field.key] = formatDateForInput(value);
+      return;
+    }
+
+    if (Array.isArray(value)) {
+      nextFormData[field.key] = value.join(", ");
+      return;
+    }
+
+    nextFormData[field.key] = value ?? "";
+  });
+
+  return nextFormData;
+}
+
+function toSubmitPayload(formData: Record<string, any>, fields: FormField[]) {
+  const payload: Record<string, any> = {};
+
+  fields.forEach((field) => {
+    const value = formData[field.key];
+
+    if (field.key === "multipleDestinations") {
+      payload[field.key] = typeof value === "string"
+        ? value
+            .split(",")
+            .map((entry) => entry.trim())
+            .filter(Boolean)
+        : [];
+      return;
+    }
+
+    if (field.type === "number") {
+      payload[field.key] = value === "" ? undefined : Number(value);
+      return;
+    }
+
+    if (field.type === "date") {
+      payload[field.key] = value || undefined;
+      return;
+    }
+
+    payload[field.key] = value === "" ? undefined : value;
+  });
+
+  return payload;
+}
+
+export default function CrudPage({
+  title,
+  endpoint,
+  columns: customColumns,
+  fields = [],
+  fetchDetailOnEdit = false,
+}: CrudPageProps) {
   const [data, setData] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   
@@ -24,7 +130,7 @@ export default function CrudPage({ title, endpoint }: CrudPageProps) {
   const [formData, setFormData] = useState<Record<string, string>>({});
 
   // Dynamic columns based on data
-  const [columns, setColumns] = useState<Column[]>([
+  const [columns, setColumns] = useState<Column[]>(customColumns || [
     { key: "id", label: "ID" },
     { key: "name", label: "Name" },
     { key: "createdAt", label: "Created At", render: (val) => val ? new Date(val).toLocaleDateString() : "-" }
@@ -39,7 +145,7 @@ export default function CrudPage({ title, endpoint }: CrudPageProps) {
       setData(items);
 
       // Auto-generate columns from first item if it exists
-      if (items.length > 0) {
+      if (!customColumns && items.length > 0) {
         const firstItem = items[0];
         const newCols = Object.keys(firstItem)
           .filter(key => typeof firstItem[key] !== 'object') // skip nested objects for generic table
@@ -62,10 +168,19 @@ export default function CrudPage({ title, endpoint }: CrudPageProps) {
       console.error(`Failed to fetch ${title}:`, error);
       toast.error(`Failed to load data. The backend might be unreachable.`);
       // Mock data for demo purposes since backend might not be ready or have data
-      setData([
+      const mockData = [
         { id: "1", name: "Mock Entry 1", status: "Active", createdAt: new Date().toISOString() },
         { id: "2", name: "Mock Entry 2", status: "Pending", createdAt: new Date().toISOString() },
-      ]);
+      ];
+      setData(mockData);
+      if (!customColumns) {
+        setColumns([
+          { key: "id", label: "ID" },
+          { key: "name", label: "Name" },
+          { key: "status", label: "Status" },
+          { key: "createdAt", label: "Created At", render: (val) => val ? new Date(val).toLocaleDateString() : "-" },
+        ]);
+      }
     } finally {
       setLoading(false);
     }
@@ -77,14 +192,32 @@ export default function CrudPage({ title, endpoint }: CrudPageProps) {
 
   const handleAdd = () => {
     setEditingItem(null);
-    setFormData({});
+    setFormData(
+      fields.reduce<Record<string, any>>((acc, field) => {
+        acc[field.key] = "";
+        return acc;
+      }, {})
+    );
     setIsModalOpen(true);
   };
 
-  const handleEdit = (item: any) => {
-    setEditingItem(item);
-    setFormData(item);
-    setIsModalOpen(true);
+  const handleEdit = async (item: any) => {
+    try {
+      const id = item.id || item._id;
+      let nextItem = item;
+
+      if (fetchDetailOnEdit && id) {
+        const result = await api.get(`${endpoint}/${id}`);
+        nextItem = normalizeApiItem(result);
+      }
+
+      setEditingItem(nextItem);
+      setFormData(fields.length > 0 ? toFormValues(nextItem, fields) : nextItem);
+      setIsModalOpen(true);
+    } catch (error) {
+      console.error("Failed to load record details:", error);
+      toast.error("Failed to load record details");
+    }
   };
 
   const handleDelete = async (item: any) => {
@@ -112,10 +245,10 @@ export default function CrudPage({ title, endpoint }: CrudPageProps) {
     try {
       if (editingItem) {
         const id = editingItem.id || editingItem._id;
-        await api.put(`${endpoint}/${id}`, formData);
+        await api.put(`${endpoint}/${id}`, fields.length > 0 ? toSubmitPayload(formData, fields) : formData);
         toast.success("Record updated successfully");
       } else {
-        await api.post(endpoint, formData);
+        await api.post(endpoint, fields.length > 0 ? toSubmitPayload(formData, fields) : formData);
         toast.success("Record created successfully");
       }
       setIsModalOpen(false);
@@ -126,7 +259,9 @@ export default function CrudPage({ title, endpoint }: CrudPageProps) {
     }
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
@@ -153,8 +288,54 @@ export default function CrudPage({ title, endpoint }: CrudPageProps) {
         title={editingItem ? `Edit ${title} Record` : `Add New ${title} Record`}
       >
         <form onSubmit={handleSubmit} className={styles.form}>
-          {columns.map((col) => {
-            if (col.key === 'id' || col.key === '_id') return null; // Don't edit ID
+          {fields.length > 0 ? fields.map((field) => {
+            const isRequired = typeof field.required === "function"
+              ? field.required(formData)
+              : Boolean(field.required);
+
+            return (
+              <div key={field.key} className={styles.inputGroup}>
+                <label htmlFor={field.key}>{field.label}</label>
+                {field.type === "select" ? (
+                  <select
+                    id={field.key}
+                    name={field.key}
+                    value={formData[field.key] || ""}
+                    onChange={handleInputChange}
+                    required={isRequired}
+                  >
+                    <option value="">Select {field.label.toLowerCase()}</option>
+                    {field.options?.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                ) : field.type === "textarea" ? (
+                  <textarea
+                    id={field.key}
+                    name={field.key}
+                    value={formData[field.key] || ""}
+                    onChange={handleInputChange}
+                    placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
+                    required={isRequired}
+                    rows={4}
+                  />
+                ) : (
+                  <input
+                    type={field.type || "text"}
+                    id={field.key}
+                    name={field.key}
+                    value={formData[field.key] || ""}
+                    onChange={handleInputChange}
+                    placeholder={field.placeholder || `Enter ${field.label.toLowerCase()}`}
+                    required={isRequired}
+                  />
+                )}
+              </div>
+            );
+          }) : columns.map((col) => {
+            if (col.key === 'id' || col.key === '_id') return null;
             return (
               <div key={col.key} className={styles.inputGroup}>
                 <label htmlFor={col.key}>{col.label}</label>
@@ -172,7 +353,7 @@ export default function CrudPage({ title, endpoint }: CrudPageProps) {
           })}
           
           {/* If there are no columns to show (empty data case), show generic inputs */}
-          {columns.length <= 1 && (
+          {fields.length === 0 && columns.length <= 1 && (
             <>
               <div className={styles.inputGroup}>
                 <label htmlFor="name">Name</label>

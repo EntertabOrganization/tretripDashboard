@@ -34,17 +34,27 @@
   color: #334155;
 }
 
-.inputGroup input {
+.inputGroup input,
+.inputGroup select,
+.inputGroup textarea {
   padding: 0.75rem 1rem;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
   font-size: 0.95rem;
   color: #1e293b;
+  background: #ffffff;
   transition: all 0.2s;
   outline: none;
 }
 
-.inputGroup input:focus {
+.inputGroup textarea {
+  resize: vertical;
+  min-height: 120px;
+}
+
+.inputGroup input:focus,
+.inputGroup select:focus,
+.inputGroup textarea:focus {
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
