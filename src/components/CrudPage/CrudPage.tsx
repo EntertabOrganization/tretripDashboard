@@ -15,7 +15,7 @@ interface CrudPageProps {
   fetchDetailOnEdit?: boolean;
 }
 
-type FieldType = "text" | "number" | "date" | "select" | "textarea";
+type FieldType = "text" | "number" | "date" | "select" | "textarea" | "checkbox-group";
 
 interface FieldOption {
   label: string;
@@ -96,6 +96,11 @@ function toSubmitPayload(formData: Record<string, any>, fields: FormField[]) {
       return;
     }
 
+    if (field.type === "checkbox-group") {
+      payload[field.key] = Array.isArray(value) ? value : [];
+      return;
+    }
+
     if (field.type === "number") {
       payload[field.key] = value === "" ? undefined : Number(value);
       return;
@@ -127,7 +132,7 @@ export default function CrudPage({
   const [editingItem, setEditingItem] = useState<any>(null);
   
   // Form state (generic)
-  const [formData, setFormData] = useState<Record<string, string>>({});
+  const [formData, setFormData] = useState<Record<string, any>>({});
 
   // Dynamic columns based on data
   const [columns, setColumns] = useState<Column[]>(customColumns || [
@@ -265,6 +270,15 @@ export default function CrudPage({
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const handleCheckboxGroupChange = (fieldKey: string, optionValue: string, checked: boolean) => {
+    const currentValues = Array.isArray(formData[fieldKey]) ? formData[fieldKey] : [];
+    const nextValues = checked
+      ? [...currentValues, optionValue]
+      : currentValues.filter((value: string) => value !== optionValue);
+
+    setFormData({ ...formData, [fieldKey]: nextValues });
+  };
+
   return (
     <div className={styles.container}>
       <div className={styles.header}>
@@ -304,7 +318,7 @@ export default function CrudPage({
                     onChange={handleInputChange}
                     required={isRequired}
                   >
-                    <option value="">Select {field.label.toLowerCase()}</option>
+                    <option value="">{field.placeholder || `Select ${field.label.toLowerCase()}`}</option>
                     {field.options?.map((option) => (
                       <option key={option.value} value={option.value}>
                         {option.label}
@@ -321,6 +335,25 @@ export default function CrudPage({
                     required={isRequired}
                     rows={4}
                   />
+                ) : field.type === "checkbox-group" ? (
+                  <div className={styles.checkboxGroup}>
+                    {field.options?.map((option) => {
+                      const selectedValues = Array.isArray(formData[field.key]) ? formData[field.key] : [];
+
+                      return (
+                        <label key={option.value} className={styles.checkboxOption}>
+                          <input
+                            type="checkbox"
+                            checked={selectedValues.includes(option.value)}
+                            onChange={(e) =>
+                              handleCheckboxGroupChange(field.key, option.value, e.target.checked)
+                            }
+                          />
+                          <span>{option.label}</span>
+                        </label>
+                      );
+                    })}
+                  </div>
                 ) : (
                   <input
                     type={field.type || "text"}
